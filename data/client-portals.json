@@ -1,0 +1,152 @@
+[
+  {
+    "slug": "nate-marta-kelly",
+    "clientNames": "Nate and Marta Kelly",
+    "viewLabel": "Accepted Offer Timeline Buyer",
+    "address": "W3795880 Farmwood Hts, Oconomowoc, Wisconsin",
+    "propertyImage": "https://images.unsplash.com/photo-1576941089067-2de3c901e126?auto=format&fit=crop&w=1600&q=80",
+    "propertyImageAlt": "Warm suburban home exterior with a broad driveway",
+    "transactionType": "Buyer",
+    "closingDate": "2025-10-09",
+    "summaryNote": "Everything here is designed to keep the next steps clear, organized, and easy to follow.",
+    "email": "nate@example.com",
+    "accessCode": "kelly2025",
+    "milestones": [
+      {
+        "title": "Accepted Offer Date",
+        "deadline": "2025-09-05",
+        "notes": "Congratulations. Our offer was accepted and the contract is now fully binding.",
+        "completed": true
+      },
+      {
+        "title": "Earnest Money",
+        "deadline": "2025-09-10",
+        "notes": "Earnest money needs to be submitted within 5 days of the accepted offer.",
+        "completed": true
+      },
+      {
+        "title": "Proof of Funds / Application",
+        "deadline": "2025-09-12",
+        "notes": "Within 7 days of acceptance we need to provide proof of funds or proof of loan application.",
+        "completed": true
+      },
+      {
+        "title": "Home Inspection",
+        "deadline": "2025-09-20",
+        "notes": "Inspection is scheduled and the report will guide any follow-up requests or negotiations.",
+        "completed": true
+      },
+      {
+        "title": "Well",
+        "deadline": "2025-10-02",
+        "notes": "Seller to provide the well inspection and water test reports for review.",
+        "completed": false
+      },
+      {
+        "title": "Financing",
+        "deadline": "2025-10-05",
+        "notes": "This is the financing contingency deadline. Please respond quickly to lender requests so we stay on track.",
+        "completed": false
+      },
+      {
+        "title": "Appraisal",
+        "deadline": "2025-10-05",
+        "notes": "This is our deadline to object to a low appraisal. Please let me know as soon as the appraisal comes in.",
+        "completed": false
+      },
+      {
+        "title": "Title",
+        "deadline": "2025-10-02",
+        "notes": "Title commitment should be delivered for review so we can confirm there are no issues to resolve.",
+        "completed": false
+      },
+      {
+        "title": "Pre-Closing Walkthrough",
+        "deadline": "2025-10-08",
+        "notes": "We will schedule the final walkthrough shortly before closing to confirm the property condition.",
+        "completed": false
+      },
+      {
+        "title": "Closing Date",
+        "deadline": "2025-10-09",
+        "notes": "Closing will be coordinated with the lender and title company. I will confirm time and location.",
+        "completed": false
+      }
+    ]
+  },
+  {
+    "clientNames": "Glenn Hanon",
+    "viewLabel": "Accepted Offer Timeline Buyer",
+    "address": "436 S Stocks Rd, Oconomowoc",
+    "propertyImage": "/client-portals/stocks.jpg",
+    "propertyImageAlt": "Client property cover photo",
+    "transactionType": "Buyer",
+    "closingDate": "2026-04-15",
+    "summaryNote": "Everything here is designed to keep the next steps clear, organized, and easy to follow.",
+    "email": "ghanon@shorewest.com",
+    "accessCode": "5256",
+    "milestones": [
+      {
+        "title": "Accepted Offer Date",
+        "deadline": "2026-03-18",
+        "notes": "Congratulations. Our offer was accepted and the contract is now fully binding.",
+        "completed": true
+      },
+      {
+        "title": "Earnest Money",
+        "deadline": "2026-03-23",
+        "notes": "Earnest money needs to be submitted within 5 days of the accepted offer.",
+        "completed": true
+      },
+      {
+        "title": "Proof of Funds / Application",
+        "deadline": "2026-03-25",
+        "notes": "Provide proof of funds or proof of loan application by the contract deadline.",
+        "completed": true
+      },
+      {
+        "title": "Home Inspection",
+        "deadline": "2026-04-02",
+        "notes": "Inspection will be scheduled and any follow-up requests can be tracked here.",
+        "completed": true
+      },
+      {
+        "title": "Well",
+        "deadline": "2026-03-31",
+        "notes": "Seller to provide the well inspection and water test reports for review.",
+        "completed": false
+      },
+      {
+        "title": "Financing",
+        "deadline": "2026-04-14",
+        "notes": "This is the financing contingency deadline. Please respond quickly to lender requests so we stay on track.",
+        "completed": false
+      },
+      {
+        "title": "Appraisal",
+        "deadline": "2026-04-14",
+        "notes": "Please let me know as soon as the appraisal is completed so we can review next steps.",
+        "completed": false
+      },
+      {
+        "title": "Title",
+        "deadline": "2026-03-31",
+        "notes": "Title commitment should be delivered for review so we can confirm there are no issues to resolve.",
+        "completed": false
+      },
+      {
+        "title": "Pre-Closing Walkthrough",
+        "deadline": "2026-04-15",
+        "notes": "We will schedule the final walkthrough shortly before closing to confirm the property condition.",
+        "completed": false
+      },
+      {
+        "title": "Closing Date",
+        "deadline": "2026-04-15",
+        "notes": "Closing will be coordinated with the lender and title company. I will confirm time and location.",
+        "completed": false
+      }
+    ],
+    "slug": "glenn-hanon"
+  }
+]

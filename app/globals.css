@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f1e8;
+  --foreground: #1f2d42;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: #fbf8f2;
+  --color-line: #d9d0c4;
+  --color-muted: #66707d;
+  --color-navy: #22395d;
+  --color-ink: #1f2d42;
+  --color-accent: #8a6a48;
+  --font-sans: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --shadow-panel: 0 32px 80px rgba(34, 57, 93, 0.12);
+  --shadow-card: 0 12px 28px rgba(34, 57, 93, 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-navy) 16%, white);
+}
+
+.site-shell {
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at top, rgba(34, 57, 93, 0.08), transparent 30%),
+    linear-gradient(180deg, #fcfaf6 0%, #f4eee4 100%);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.shadow-panel {
+  box-shadow: var(--shadow-panel);
+}
+
+.shadow-card {
+  box-shadow: var(--shadow-card);
 }
