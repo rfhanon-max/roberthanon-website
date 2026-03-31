@@ -59,6 +59,7 @@ export function PageHero({
                     <Link
                       href={secondaryCta.href}
                       className="inline-flex items-center rounded-full border border-white/35 bg-white/8 px-6 py-3 text-sm text-white transition hover:bg-white/14"
+                      style={{ color: "#f8f5ef" }}
                     >
                       {secondaryCta.label}
                     </Link>
@@ -107,6 +108,7 @@ export function PageHero({
                   <Link
                     href={secondaryCta.href}
                     className="inline-flex items-center rounded-full border border-white/35 bg-white/8 px-6 py-3 text-sm text-white transition hover:bg-white/14"
+                    style={{ color: "#f8f5ef" }}
                   >
                     {secondaryCta.label}
                   </Link>
