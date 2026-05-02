@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { CLIENT_PORTAL_COOKIE, createPortalSessionValue } from "@/lib/client-portal-auth";
 import { getPortalByCredentials } from "@/lib/client-portal-store";
 
 export type LoginState = {
@@ -25,10 +26,10 @@ export async function loginClientPortal(
   }
 
   const cookieStore = await cookies();
-  cookieStore.set("client_portal_slug", portal.slug, {
+  cookieStore.set(CLIENT_PORTAL_COOKIE, createPortalSessionValue(portal), {
     httpOnly: true,
     sameSite: "lax",
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });

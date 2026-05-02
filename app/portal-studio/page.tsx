@@ -1,8 +1,14 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { PortalStudioForm } from "@/components/portal/portal-studio-form";
 import { getAllPortals } from "@/lib/client-portal-store";
+import { isPortalStudioEnabled } from "@/lib/portal-studio-access";
 
 export default async function PortalStudioPage() {
+  if (!isPortalStudioEnabled()) {
+    notFound();
+  }
+
   const portals = await getAllPortals();
 
   return (

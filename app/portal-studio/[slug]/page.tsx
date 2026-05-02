@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PortalStudioForm } from "@/components/portal/portal-studio-form";
 import { getPortalBySlug } from "@/lib/client-portal-store";
+import { isPortalStudioEnabled } from "@/lib/portal-studio-access";
 
 type PortalStudioEditPageProps = {
   params: Promise<{
@@ -9,6 +10,10 @@ type PortalStudioEditPageProps = {
 };
 
 export default async function PortalStudioEditPage({ params }: PortalStudioEditPageProps) {
+  if (!isPortalStudioEnabled()) {
+    notFound();
+  }
+
   const { slug } = await params;
   const portal = await getPortalBySlug(slug);
 

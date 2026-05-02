@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { deletePortal } from "@/lib/client-portal-store";
+import { isPortalStudioEnabled } from "@/lib/portal-studio-access";
 
 type Payload = {
   slug?: string;
@@ -16,6 +17,13 @@ function getDeleteErrorMessage(error: unknown) {
 
 export async function POST(request: Request) {
   try {
+    if (!isPortalStudioEnabled()) {
+      return NextResponse.json(
+        { error: "Portal Studio is not available on the live website." },
+        { status: 404 },
+      );
+    }
+
     const payload = (await request.json()) as Payload;
 
     if (!payload.slug) {
