@@ -148,5 +148,68 @@
       }
     ],
     "slug": "glenn-hanon"
+  },
+  {
+    "slug": "justin-and-jenny-lex",
+    "clientNames": "Justin and Jenny Lex",
+    "viewLabel": "Accepted Offer Timeline Buyer",
+    "address": "1622 Moonlit Dr, Richfield",
+    "propertyImage": "/client-portals/cover.jpg",
+    "propertyImageAlt": "Exterior view of the property at 1622 Moonlit Dr",
+    "transactionType": "Buyer",
+    "closingDate": "2026-06-10",
+    "summaryNote": "Everything here is designed to keep the next steps clear, organized, and easy to follow.",
+    "email": "justin@swimmingpoolservices.com",
+    "accessCode": "Moonlit",
+    "milestones": [
+      {
+        "title": "Accepted Offer Date",
+        "deadline": "2026-05-01",
+        "notes": "Congratulations. Our offer was accepted and the contract is now fully binding.",
+        "completed": true
+      },
+      {
+        "title": "Earnest Money",
+        "deadline": "2026-05-06",
+        "notes": "Earnest money needs to be submitted within 5 days of the accepted offer. I will provide you with a link to TrustFunds to submit the earnest money electronically.",
+        "completed": false
+      },
+      {
+        "title": "Proof of Funds / Application",
+        "deadline": "2026-05-08",
+        "notes": "Provide proof of loan application by the deadline.",
+        "completed": false
+      },
+      {
+        "title": "Well and Septic",
+        "deadline": "2026-05-26",
+        "notes": "Seller to provide the well inspection, water test reports, and Septic inspection for review.",
+        "completed": false
+      },
+      {
+        "title": "Financing",
+        "deadline": "2026-05-19",
+        "notes": "This is the financing contingency deadline. Please respond quickly to lender requests so we stay on track.",
+        "completed": false
+      },
+      {
+        "title": "Title",
+        "deadline": "2026-05-26",
+        "notes": "Title commitment should be delivered for review so we can confirm there are no issues to resolve.",
+        "completed": false
+      },
+      {
+        "title": "Pre-Closing Walkthrough",
+        "deadline": "2026-06-09",
+        "notes": "We will schedule the final walkthrough shortly before closing to confirm the property condition.",
+        "completed": false
+      },
+      {
+        "title": "Closing Date",
+        "deadline": "2026-06-10",
+        "notes": "Closing will be coordinated with the lender and title company. I will confirm time and location.",
+        "completed": false
+      }
+    ]
   }
 ]
