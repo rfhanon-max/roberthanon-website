@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import { PortalStudioForm } from "@/components/portal/portal-studio-form";
 import { getAllPortals } from "@/lib/client-portal-store";
 import {
-  isPortalStudioAvailable,
   isValidPortalStudioSession,
   PORTAL_STUDIO_COOKIE,
 } from "@/lib/portal-studio-access";
@@ -13,10 +11,6 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function PortalStudioPage() {
-  if (!isPortalStudioAvailable()) {
-    notFound();
-  }
-
   const cookieStore = await cookies();
   if (!isValidPortalStudioSession(cookieStore.get(PORTAL_STUDIO_COOKIE)?.value)) {
     redirect("/portal-studio/login");

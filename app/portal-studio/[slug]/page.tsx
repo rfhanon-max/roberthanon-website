@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { PortalStudioForm } from "@/components/portal/portal-studio-form";
 import { getPortalBySlug } from "@/lib/client-portal-store";
 import {
-  isPortalStudioAvailable,
   isValidPortalStudioSession,
   PORTAL_STUDIO_COOKIE,
 } from "@/lib/portal-studio-access";
@@ -18,10 +17,6 @@ type PortalStudioEditPageProps = {
 };
 
 export default async function PortalStudioEditPage({ params }: PortalStudioEditPageProps) {
-  if (!isPortalStudioAvailable()) {
-    notFound();
-  }
-
   const cookieStore = await cookies();
   if (!isValidPortalStudioSession(cookieStore.get(PORTAL_STUDIO_COOKIE)?.value)) {
     redirect("/portal-studio/login");

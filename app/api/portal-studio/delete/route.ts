@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { deletePortal } from "@/lib/client-portal-store";
 import {
-  isPortalStudioAvailable,
   isValidPortalStudioSession,
   PORTAL_STUDIO_COOKIE,
 } from "@/lib/portal-studio-access";
@@ -22,13 +21,6 @@ function getDeleteErrorMessage(error: unknown) {
 
 export async function POST(request: Request) {
   try {
-    if (!isPortalStudioAvailable()) {
-      return NextResponse.json(
-        { error: "Portal Studio is not available on the live website." },
-        { status: 404 },
-      );
-    }
-
     const cookieStore = await cookies();
     if (!isValidPortalStudioSession(cookieStore.get(PORTAL_STUDIO_COOKIE)?.value)) {
       return NextResponse.json({ error: "Portal Studio login is required." }, { status: 401 });

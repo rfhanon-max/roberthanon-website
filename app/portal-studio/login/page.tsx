@@ -1,14 +1,8 @@
-import { notFound } from "next/navigation";
 import { PortalStudioLoginForm } from "@/components/portal/portal-studio-login-form";
-import { isPortalStudioAvailable } from "@/lib/portal-studio-access";
 
 export const dynamic = "force-dynamic";
 
 export default function PortalStudioLoginPage() {
-  if (!isPortalStudioAvailable()) {
-    notFound();
-  }
-
   return (
     <section className="mx-auto w-full max-w-5xl px-6 py-14 lg:px-8 lg:py-20">
       <div className="max-w-3xl">
