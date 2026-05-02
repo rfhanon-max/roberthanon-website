@@ -1,6 +1,14 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { ClientPortalRecord, portalTemplates } from "@/lib/client-portal-schema";
+import {
+  deletePortalFromDb,
+  getAllPortalsFromDb,
+  getPortalBySlugFromDb,
+  hasClientPortalDatabase,
+  savePortalToDb,
+  seedPortalsToDb,
+} from "@/lib/client-portal-db";
 
 export { portalTemplates };
 
@@ -14,12 +22,53 @@ function normalizeSlug(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export async function getAllPortals(): Promise<ClientPortalRecord[]> {
+async function getAllPortalsFromJson(): Promise<ClientPortalRecord[]> {
   const raw = await fs.readFile(PORTALS_PATH, "utf-8");
   return JSON.parse(raw) as ClientPortalRecord[];
 }
 
+async function savePortalsToJson(portals: ClientPortalRecord[]) {
+  await fs.writeFile(PORTALS_PATH, JSON.stringify(portals, null, 2), "utf-8");
+}
+
+export async function getAllPortals(): Promise<ClientPortalRecord[]> {
+  if (hasClientPortalDatabase) {
+    try {
+      const portals = await getAllPortalsFromDb();
+      if (portals.length > 0) {
+        return portals;
+      }
+
+      const jsonPortals = await getAllPortalsFromJson();
+      await seedPortalsToDb(jsonPortals);
+      return jsonPortals;
+    } catch (error) {
+      console.error("Falling back to JSON client portals.", error);
+      try {
+        const jsonPortals = await getAllPortalsFromJson();
+        await seedPortalsToDb(jsonPortals);
+        return jsonPortals;
+      } catch (seedError) {
+        console.error("Unable to seed client portal database.", seedError);
+      }
+    }
+  }
+
+  return getAllPortalsFromJson();
+}
+
 export async function getPortalBySlug(slug: string) {
+  if (hasClientPortalDatabase) {
+    try {
+      const portal = await getPortalBySlugFromDb(slug);
+      if (portal) {
+        return portal;
+      }
+    } catch (error) {
+      console.error("Falling back to JSON client portal lookup.", error);
+    }
+  }
+
   const portals = await getAllPortals();
   return portals.find((portal) => portal.slug === slug);
 }
@@ -49,8 +98,11 @@ export async function createPortal(input: Omit<ClientPortalRecord, "slug"> & { s
     slug,
   };
 
-  portals.push(nextRecord);
-  await fs.writeFile(PORTALS_PATH, JSON.stringify(portals, null, 2), "utf-8");
+  if (hasClientPortalDatabase) {
+    return savePortalToDb(nextRecord);
+  }
+
+  await savePortalsToJson([...portals, nextRecord]);
   return nextRecord;
 }
 
@@ -70,12 +122,20 @@ export async function updatePortal(
     slug,
   };
 
+  if (hasClientPortalDatabase) {
+    return savePortalToDb(nextRecord);
+  }
+
   portals[portalIndex] = nextRecord;
-  await fs.writeFile(PORTALS_PATH, JSON.stringify(portals, null, 2), "utf-8");
+  await savePortalsToJson(portals);
   return nextRecord;
 }
 
 export async function deletePortal(slug: string) {
+  if (hasClientPortalDatabase) {
+    return deletePortalFromDb(slug);
+  }
+
   const portals = await getAllPortals();
   const nextPortals = portals.filter((portal) => portal.slug !== slug);
 
@@ -83,6 +143,6 @@ export async function deletePortal(slug: string) {
     return false;
   }
 
-  await fs.writeFile(PORTALS_PATH, JSON.stringify(nextPortals, null, 2), "utf-8");
+  await savePortalsToJson(nextPortals);
   return true;
 }

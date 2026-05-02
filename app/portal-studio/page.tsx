@@ -1,12 +1,25 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { PortalStudioForm } from "@/components/portal/portal-studio-form";
 import { getAllPortals } from "@/lib/client-portal-store";
-import { isPortalStudioEnabled } from "@/lib/portal-studio-access";
+import {
+  isPortalStudioAvailable,
+  isValidPortalStudioSession,
+  PORTAL_STUDIO_COOKIE,
+} from "@/lib/portal-studio-access";
+
+export const dynamic = "force-dynamic";
 
 export default async function PortalStudioPage() {
-  if (!isPortalStudioEnabled()) {
+  if (!isPortalStudioAvailable()) {
     notFound();
+  }
+
+  const cookieStore = await cookies();
+  if (!isValidPortalStudioSession(cookieStore.get(PORTAL_STUDIO_COOKIE)?.value)) {
+    redirect("/portal-studio/login");
   }
 
   const portals = await getAllPortals();

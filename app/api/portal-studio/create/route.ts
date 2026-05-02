@@ -1,6 +1,11 @@
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createPortal, portalTemplates } from "@/lib/client-portal-store";
-import { isPortalStudioEnabled } from "@/lib/portal-studio-access";
+import {
+  isPortalStudioAvailable,
+  isValidPortalStudioSession,
+  PORTAL_STUDIO_COOKIE,
+} from "@/lib/portal-studio-access";
 
 type IncomingMilestone = {
   title: string;
@@ -19,8 +24,13 @@ function getSaveErrorMessage(error: unknown) {
 
 export async function POST(request: Request) {
   try {
-    if (!isPortalStudioEnabled()) {
+    if (!isPortalStudioAvailable()) {
       return Response.json({ error: "Portal Studio is not available on the live website." }, { status: 404 });
+    }
+
+    const cookieStore = await cookies();
+    if (!isValidPortalStudioSession(cookieStore.get(PORTAL_STUDIO_COOKIE)?.value)) {
+      return Response.json({ error: "Portal Studio login is required." }, { status: 401 });
     }
 
     const payload = (await request.json()) as {

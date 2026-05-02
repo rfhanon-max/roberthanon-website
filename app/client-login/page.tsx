@@ -6,9 +6,6 @@ export default function ClientLoginPage() {
       <div className="max-w-3xl">
         <p className="text-xs uppercase tracking-[0.32em] text-muted">Client Portal</p>
         <h1 className="mt-4 font-display text-5xl text-navy">A private place for dates, deadlines, and next steps.</h1>
-        <p className="mt-5 text-lg leading-8 text-muted">
-          Once logged in, clients see only their own transaction portal and can return to it without searching for the file.
-        </p>
       </div>
 
       <div className="mt-12">
