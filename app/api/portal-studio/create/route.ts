@@ -8,6 +8,14 @@ type IncomingMilestone = {
   completed: boolean;
 };
 
+function getSaveErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message.includes("EROFS")) {
+    return "Portal Studio can only save portals while the site is running locally. The live website is read-only, so add the portal locally, commit it, and redeploy.";
+  }
+
+  return error instanceof Error ? error.message : "Unable to create portal.";
+}
+
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as {
@@ -62,7 +70,7 @@ export async function POST(request: Request) {
     return Response.json({ ok: true, slug: created.slug });
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Unable to create portal." },
+      { error: getSaveErrorMessage(error) },
       { status: 500 },
     );
   }
