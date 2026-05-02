@@ -3,7 +3,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export const PORTAL_STUDIO_COOKIE = "portal_studio_session";
 
 function getAdminPassword() {
-  return process.env.PORTAL_STUDIO_PASSWORD || process.env.ADMIN_PASSWORD;
+  return (
+    process.env.PORTAL_STUDIO_PASSWORD ||
+    process.env.Portal_Studio_Password ||
+    process.env.ADMIN_PASSWORD
+  )?.trim();
 }
 
 function signStudioSession() {
@@ -41,5 +45,5 @@ export function isValidPortalStudioSession(value?: string) {
 
 export function verifyPortalStudioPassword(value: string) {
   const password = getAdminPassword();
-  return Boolean(password && value === password);
+  return Boolean(password && value.trim() === password);
 }
