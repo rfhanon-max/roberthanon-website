@@ -28,6 +28,22 @@ export default async function PortalStudioPage() {
         </p>
       </div>
 
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Link
+          href="/portal-studio"
+          className="inline-flex items-center rounded-full bg-navy px-5 py-3 text-sm font-medium text-white"
+          style={{ color: "#f8f5ef" }}
+        >
+          Create + Manage
+        </Link>
+        <Link
+          href="/portal-studio/calendar"
+          className="inline-flex items-center rounded-full border border-line bg-white px-5 py-3 text-sm font-medium text-navy transition hover:border-navy"
+        >
+          Master Calendar
+        </Link>
+      </div>
+
       <div className="mt-12 grid gap-10 xl:grid-cols-[minmax(0,1.2fr)_360px]">
         <PortalStudioForm />
 
