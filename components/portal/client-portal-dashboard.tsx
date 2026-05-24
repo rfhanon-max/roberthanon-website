@@ -2,7 +2,12 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import { ClientPortalRecord, ClientPortalView, getPortalViews } from "@/lib/client-portal-schema";
+import {
+  ClientMilestone,
+  ClientPortalRecord,
+  ClientPortalView,
+  getPortalViews,
+} from "@/lib/client-portal-schema";
 
 function formatDisplayDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -69,29 +74,58 @@ function shortEventLabel(value: string) {
   return value.length > 18 ? `${value.slice(0, 18)}...` : value;
 }
 
+function sortMilestonesByDeadline(milestones: ClientMilestone[]) {
+  return [...milestones].sort((first, second) => {
+    if (!first.deadline && !second.deadline) {
+      return first.title.localeCompare(second.title);
+    }
+
+    if (!first.deadline) {
+      return 1;
+    }
+
+    if (!second.deadline) {
+      return -1;
+    }
+
+    return first.deadline.localeCompare(second.deadline) || first.title.localeCompare(second.title);
+  });
+}
+
 export function ClientPortalDashboard({ record }: { record: ClientPortalRecord }) {
   const portalViews = useMemo(() => getPortalViews(record), [record]);
   const [activeViewId, setActiveViewId] = useState(portalViews[0]?.id ?? "buying");
   const activeView = portalViews.find((view) => view.id === activeViewId) ?? portalViews[0];
+  const sortedMilestones = useMemo(
+    () => sortMilestonesByDeadline(activeView.milestones),
+    [activeView.milestones],
+  );
+  const timelineView = useMemo(
+    () => ({
+      ...activeView,
+      milestones: sortedMilestones,
+    }),
+    [activeView, sortedMilestones],
+  );
 
-  const totalMilestones = activeView.milestones.length;
-  const completedMilestones = activeView.milestones.filter((item) => item.completed).length;
+  const totalMilestones = timelineView.milestones.length;
+  const completedMilestones = timelineView.milestones.filter((item) => item.completed).length;
   const nextMilestone =
-    activeView.milestones.find((item) => !item.completed) ??
-    activeView.milestones[activeView.milestones.length - 1];
+    timelineView.milestones.find((item) => !item.completed) ??
+    timelineView.milestones[timelineView.milestones.length - 1];
 
-  const months = useMemo(() => buildMonthDateRange(activeView), [activeView]);
+  const months = useMemo(() => buildMonthDateRange(timelineView), [timelineView]);
   const [activeMonthIndex, setActiveMonthIndex] = useState(0);
   const activeMonth = useMemo(() => months[activeMonthIndex] ?? new Date(), [activeMonthIndex, months]);
-  const weeks = useMemo(() => buildCalendarWeeks(activeView, activeMonth), [activeView, activeMonth]);
+  const weeks = useMemo(() => buildCalendarWeeks(timelineView, activeMonth), [timelineView, activeMonth]);
 
   return (
     <div className="mx-auto w-full max-w-[1560px] px-6 py-10 lg:px-8 lg:py-14">
       <section className="overflow-hidden rounded-[2.25rem] border border-line bg-white shadow-card">
         <div className="relative h-[19rem] w-full lg:h-[21rem]">
           <Image
-            src={activeView.propertyImage}
-            alt={activeView.propertyImageAlt}
+            src={timelineView.propertyImage}
+            alt={timelineView.propertyImageAlt}
             fill
             className="object-cover"
             sizes="100vw"
@@ -102,7 +136,7 @@ export function ClientPortalDashboard({ record }: { record: ClientPortalRecord }
           <div className="absolute inset-x-0 bottom-0 px-6 pb-8 pt-20 lg:px-10 lg:pb-10">
             <p className="text-xs uppercase tracking-[0.32em] text-white/70">Client Portal</p>
             <h1 className="mt-4 font-display text-5xl text-white lg:text-6xl">{record.clientNames}</h1>
-            <p className="mt-3 text-lg text-white/82 lg:text-xl">{activeView.address}</p>
+            <p className="mt-3 text-lg text-white/82 lg:text-xl">{timelineView.address}</p>
           </div>
         </div>
         {portalViews.length > 1 ? (
@@ -117,11 +151,11 @@ export function ClientPortalDashboard({ record }: { record: ClientPortalRecord }
                     setActiveMonthIndex(0);
                   }}
                   className={`rounded-full px-5 py-2 text-sm font-medium transition ${
-                    activeView.id === view.id
+                    timelineView.id === view.id
                       ? "bg-navy text-white"
                       : "text-muted hover:text-navy"
                   }`}
-                  style={activeView.id === view.id ? { color: "#f8f5ef" } : undefined}
+                  style={timelineView.id === view.id ? { color: "#f8f5ef" } : undefined}
                 >
                   {view.label}
                 </button>
@@ -158,7 +192,7 @@ export function ClientPortalDashboard({ record }: { record: ClientPortalRecord }
                 Download calendar file
               </a>
             </div>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-muted">{activeView.summaryNote}</p>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-muted">{timelineView.summaryNote}</p>
           </div>
 
           <div className="grid auto-rows-max content-start self-start gap-4 sm:grid-cols-2 lg:grid-cols-1">
@@ -174,9 +208,9 @@ export function ClientPortalDashboard({ record }: { record: ClientPortalRecord }
             <article className="self-start rounded-[1.5rem] border border-line bg-paper px-5 py-4">
               <p className="text-xs uppercase tracking-[0.28em] text-muted">Closing Date</p>
               <p className="mt-2 text-xl font-semibold leading-8 text-navy">
-                {activeView.closingDate ? formatDisplayDate(activeView.closingDate) : "Date to be added"}
+                {timelineView.closingDate ? formatDisplayDate(timelineView.closingDate) : "Date to be added"}
               </p>
-              <p className="mt-1 text-sm text-muted">{activeView.transactionType} transaction</p>
+              <p className="mt-1 text-sm text-muted">{timelineView.transactionType} transaction</p>
             </article>
           </div>
         </div>
@@ -187,7 +221,7 @@ export function ClientPortalDashboard({ record }: { record: ClientPortalRecord }
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-muted">Table View</p>
-              <h2 className="mt-3 font-display text-3xl text-navy">{activeView.viewLabel}</h2>
+              <h2 className="mt-3 font-display text-3xl text-navy">{timelineView.viewLabel}</h2>
             </div>
             <div className="rounded-full border border-line px-4 py-2 text-sm text-muted">
               Updated for your transaction
@@ -201,9 +235,9 @@ export function ClientPortalDashboard({ record }: { record: ClientPortalRecord }
               <span>Notes</span>
               <span>Done</span>
             </div>
-            {activeView.milestones.map((milestone) => (
+            {timelineView.milestones.map((milestone) => (
               <div
-                key={`${record.slug}-${activeView.id}-${milestone.title}`}
+                key={`${record.slug}-${timelineView.id}-${milestone.title}`}
                 className="grid grid-cols-[1.1fr_0.7fr_1.8fr_0.55fr] gap-4 border-b border-line px-5 py-5 text-sm leading-7 last:border-b-0"
               >
                 <div>
