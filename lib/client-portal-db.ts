@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
-import type { ClientPortalRecord } from "@/lib/client-portal-schema";
+import type { ClientMilestone, ClientPortalRecord, ClientPortalView } from "@/lib/client-portal-schema";
+import { getPortalViews, normalizePortalRecord } from "@/lib/client-portal-schema";
 
 const connectionString =
   process.env.DATABASE_URL ||
@@ -26,6 +27,7 @@ type PortalRow = {
 };
 
 type MilestoneRow = {
+  view_id?: string;
   title: string;
   deadline: string | Date;
   notes: string;
@@ -41,10 +43,37 @@ function formatDate(value: string | Date) {
   return value.toISOString().slice(0, 10);
 }
 
-function mapPortal(row: PortalRow, milestones: MilestoneRow[]): ClientPortalRecord {
+type ViewRow = {
+  portal_slug: string;
+  view_id: string;
+  label: string;
+  view_label: string;
+  address: string;
+  property_image: string;
+  property_image_alt: string;
+  transaction_type: string;
+  closing_date: string | Date;
+  summary_note: string;
+  order_index: number;
+};
+
+function mapMilestones(milestones: MilestoneRow[]): ClientMilestone[] {
+  return milestones
+    .sort((a, b) => a.order_index - b.order_index)
+    .map((milestone) => ({
+      title: milestone.title,
+      deadline: formatDate(milestone.deadline),
+      notes: milestone.notes,
+      completed: milestone.completed,
+    }));
+}
+
+function legacyViewFromPortal(row: PortalRow, milestones: MilestoneRow[]): ClientPortalView {
+  const isSeller = row.transaction_type.toLowerCase().includes("seller");
+
   return {
-    slug: row.slug,
-    clientNames: row.client_names,
+    id: isSeller ? "selling" : "buying",
+    label: isSeller ? "Selling" : "Buying",
     viewLabel: row.view_label,
     address: row.address,
     propertyImage: row.property_image,
@@ -52,17 +81,51 @@ function mapPortal(row: PortalRow, milestones: MilestoneRow[]): ClientPortalReco
     transactionType: row.transaction_type,
     closingDate: formatDate(row.closing_date),
     summaryNote: row.summary_note,
+    milestones: mapMilestones(milestones),
+  };
+}
+
+function mapPortal(
+  row: PortalRow,
+  milestones: MilestoneRow[],
+  views: ViewRow[] = [],
+): ClientPortalRecord {
+  const milestonesByView = new Map<string, MilestoneRow[]>();
+  for (const milestone of milestones) {
+    const viewId = milestone.view_id ?? "";
+    const current = milestonesByView.get(viewId) ?? [];
+    current.push(milestone);
+    milestonesByView.set(viewId, current);
+  }
+
+  const portalViews =
+    views.length > 0
+      ? views
+          .sort((a, b) => a.order_index - b.order_index)
+          .map((view) => ({
+            id: view.view_id,
+            label: view.label,
+            viewLabel: view.view_label,
+            address: view.address,
+            propertyImage: view.property_image,
+            propertyImageAlt: view.property_image_alt,
+            transactionType: view.transaction_type,
+            closingDate: formatDate(view.closing_date),
+            summaryNote: view.summary_note,
+            milestones: mapMilestones(milestonesByView.get(view.view_id) ?? []),
+          }))
+      : [legacyViewFromPortal(row, milestones)];
+
+  const primaryView = portalViews[0];
+
+  return normalizePortalRecord({
+    slug: row.slug,
+    clientNames: row.client_names,
     email: row.email,
     accessCode: row.access_code,
-    milestones: milestones
-      .sort((a, b) => a.order_index - b.order_index)
-      .map((milestone) => ({
-        title: milestone.title,
-        deadline: formatDate(milestone.deadline),
-        notes: milestone.notes,
-        completed: milestone.completed,
-      })),
-  };
+    ...primaryView,
+    portalViews,
+  });
 }
 
 function requireSql() {
@@ -74,6 +137,7 @@ function requireSql() {
 }
 
 export async function getAllPortalsFromDb() {
+  await createClientPortalTables();
   const db = requireSql();
   const rows = (await db`
     select
@@ -93,10 +157,27 @@ export async function getAllPortalsFromDb() {
   `) as PortalRow[];
 
   const milestoneRows = (await db`
-    select portal_slug, title, deadline, notes, completed, order_index
+    select portal_slug, view_id, title, deadline, notes, completed, order_index
     from client_portal_milestones
     order by portal_slug asc, order_index asc
   `) as (MilestoneRow & { portal_slug: string })[];
+
+  const viewRows = (await db`
+    select
+      portal_slug,
+      view_id,
+      label,
+      view_label,
+      address,
+      property_image,
+      property_image_alt,
+      transaction_type,
+      closing_date,
+      summary_note,
+      order_index
+    from client_portal_views
+    order by portal_slug asc, order_index asc
+  `) as ViewRow[];
 
   const milestonesBySlug = new Map<string, MilestoneRow[]>();
   for (const milestone of milestoneRows) {
@@ -105,10 +186,20 @@ export async function getAllPortalsFromDb() {
     milestonesBySlug.set(milestone.portal_slug, current);
   }
 
-  return rows.map((row) => mapPortal(row, milestonesBySlug.get(row.slug) ?? []));
+  const viewsBySlug = new Map<string, ViewRow[]>();
+  for (const view of viewRows) {
+    const current = viewsBySlug.get(view.portal_slug) ?? [];
+    current.push(view);
+    viewsBySlug.set(view.portal_slug, current);
+  }
+
+  return rows.map((row) =>
+    mapPortal(row, milestonesBySlug.get(row.slug) ?? [], viewsBySlug.get(row.slug) ?? []),
+  );
 }
 
 export async function getPortalBySlugFromDb(slug: string) {
+  await createClientPortalTables();
   const db = requireSql();
   const rows = (await db`
     select
@@ -132,19 +223,39 @@ export async function getPortalBySlugFromDb(slug: string) {
     return null;
   }
 
+  const views = (await db`
+    select
+      portal_slug,
+      view_id,
+      label,
+      view_label,
+      address,
+      property_image,
+      property_image_alt,
+      transaction_type,
+      closing_date,
+      summary_note,
+      order_index
+    from client_portal_views
+    where portal_slug = ${slug}
+    order by order_index asc
+  `) as ViewRow[];
+
   const milestones = (await db`
-    select title, deadline, notes, completed, order_index
+    select view_id, title, deadline, notes, completed, order_index
     from client_portal_milestones
     where portal_slug = ${slug}
     order by order_index asc
   `) as MilestoneRow[];
 
-  return mapPortal(rows[0], milestones);
+  return mapPortal(rows[0], milestones, views);
 }
 
 export async function savePortalToDb(record: ClientPortalRecord) {
   await createClientPortalTables();
   const db = requireSql();
+  const portalViews = getPortalViews(record);
+  const primaryView = portalViews[0];
 
   await db`
     insert into client_portals (
@@ -163,13 +274,13 @@ export async function savePortalToDb(record: ClientPortalRecord) {
     values (
       ${record.slug},
       ${record.clientNames},
-      ${record.viewLabel},
-      ${record.address},
-      ${record.propertyImage},
-      ${record.propertyImageAlt},
-      ${record.transactionType},
-      ${record.closingDate},
-      ${record.summaryNote},
+      ${primaryView.viewLabel},
+      ${primaryView.address},
+      ${primaryView.propertyImage},
+      ${primaryView.propertyImageAlt},
+      ${primaryView.transactionType},
+      ${primaryView.closingDate},
+      ${primaryView.summaryNote},
       ${record.email},
       ${record.accessCode}
     )
@@ -187,12 +298,46 @@ export async function savePortalToDb(record: ClientPortalRecord) {
       updated_at = now()
   `;
 
+  await db`delete from client_portal_views where portal_slug = ${record.slug}`;
   await db`delete from client_portal_milestones where portal_slug = ${record.slug}`;
 
-  for (const [index, milestone] of record.milestones.entries()) {
+  for (const [viewIndex, view] of portalViews.entries()) {
+    await db`
+      insert into client_portal_views (
+        portal_slug,
+        view_id,
+        order_index,
+        label,
+        view_label,
+        address,
+        property_image,
+        property_image_alt,
+        transaction_type,
+        closing_date,
+        summary_note
+      )
+      values (
+        ${record.slug},
+        ${view.id},
+        ${viewIndex},
+        ${view.label},
+        ${view.viewLabel},
+        ${view.address},
+        ${view.propertyImage},
+        ${view.propertyImageAlt},
+        ${view.transactionType},
+        ${view.closingDate},
+        ${view.summaryNote}
+      )
+    `;
+  }
+
+  for (const view of portalViews) {
+    for (const [index, milestone] of view.milestones.entries()) {
     await db`
       insert into client_portal_milestones (
         portal_slug,
+        view_id,
         order_index,
         title,
         deadline,
@@ -201,6 +346,7 @@ export async function savePortalToDb(record: ClientPortalRecord) {
       )
       values (
         ${record.slug},
+        ${view.id},
         ${index},
         ${milestone.title},
         ${milestone.deadline},
@@ -208,6 +354,7 @@ export async function savePortalToDb(record: ClientPortalRecord) {
         ${milestone.completed}
       )
     `;
+    }
   }
 
   return record;
@@ -249,6 +396,7 @@ export async function createClientPortalTables() {
     create table if not exists client_portal_milestones (
       id bigserial primary key,
       portal_slug text not null references client_portals(slug) on delete cascade,
+      view_id text,
       order_index integer not null,
       title text not null,
       deadline date not null,
@@ -259,8 +407,37 @@ export async function createClientPortalTables() {
   `;
 
   await db`
+    alter table client_portal_milestones
+    add column if not exists view_id text
+  `;
+
+  await db`
+    create table if not exists client_portal_views (
+      id bigserial primary key,
+      portal_slug text not null references client_portals(slug) on delete cascade,
+      view_id text not null,
+      order_index integer not null,
+      label text not null,
+      view_label text not null,
+      address text not null,
+      property_image text not null,
+      property_image_alt text not null,
+      transaction_type text not null,
+      closing_date date not null,
+      summary_note text not null,
+      created_at timestamptz not null default now(),
+      unique (portal_slug, view_id)
+    )
+  `;
+
+  await db`
     create index if not exists client_portal_milestones_portal_slug_idx
     on client_portal_milestones(portal_slug)
+  `;
+
+  await db`
+    create index if not exists client_portal_views_portal_slug_idx
+    on client_portal_views(portal_slug)
   `;
 }
 

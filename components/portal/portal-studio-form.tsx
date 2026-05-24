@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { ClientPortalRecord } from "@/lib/client-portal-schema";
-import { portalTemplates } from "@/lib/client-portal-schema";
+import { getPortalViews, portalTemplates } from "@/lib/client-portal-schema";
 
 type StudioMilestone = {
   id: string;
@@ -13,8 +13,30 @@ type StudioMilestone = {
   completed: boolean;
 };
 
+type StudioPortalView = {
+  id: string;
+  label: string;
+  viewLabel: string;
+  address: string;
+  propertyImage: string;
+  propertyImageAlt: string;
+  transactionType: string;
+  closingDate: string;
+  summaryNote: string;
+  milestones: StudioMilestone[];
+};
+
 function newMilestoneId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function stripMilestoneId(milestone: StudioMilestone) {
+  return {
+    title: milestone.title,
+    deadline: milestone.deadline,
+    notes: milestone.notes,
+    completed: milestone.completed,
+  };
 }
 
 type PortalStudioFormProps = {
@@ -23,30 +45,47 @@ type PortalStudioFormProps = {
 
 export function PortalStudioForm({ initialPortal }: PortalStudioFormProps) {
   const router = useRouter();
-  const starterMilestones = useMemo(
-    () =>
-      (initialPortal?.milestones || portalTemplates.buyer.milestones).map((milestone) => ({
+  const starterViews = useMemo<StudioPortalView[]>(
+    () => {
+      const views = initialPortal
+        ? getPortalViews(initialPortal)
+        : [
+            {
+              ...portalTemplates.buyer,
+              address: "",
+              propertyImage: "",
+              propertyImageAlt: "",
+              closingDate: "",
+            },
+          ];
+
+      return views.map((view) => ({
+        ...view,
+        milestones: view.milestones.map((milestone) => ({
         id: newMilestoneId(),
         ...milestone,
       })),
+      }));
+    },
     [initialPortal],
   );
 
   const [clientNames, setClientNames] = useState(initialPortal?.clientNames || "");
   const [email, setEmail] = useState(initialPortal?.email || "");
   const [accessCode, setAccessCode] = useState(initialPortal?.accessCode || "");
-  const [address, setAddress] = useState(initialPortal?.address || "");
-  const [propertyImage, setPropertyImage] = useState(initialPortal?.propertyImage || "");
-  const [propertyImageAlt, setPropertyImageAlt] = useState(initialPortal?.propertyImageAlt || "");
-  const [closingDate, setClosingDate] = useState(initialPortal?.closingDate || "");
-  const [summaryNote, setSummaryNote] = useState<string>(
-    initialPortal?.summaryNote || portalTemplates.buyer.summaryNote,
-  );
-  const [milestones, setMilestones] = useState<StudioMilestone[]>(starterMilestones);
+  const [portalViews, setPortalViews] = useState<StudioPortalView[]>(starterViews);
+  const [activeViewId, setActiveViewId] = useState(starterViews[0]?.id ?? portalTemplates.buyer.id);
   const [status, setStatus] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const isEditing = Boolean(initialPortal);
+  const activeView = portalViews.find((view) => view.id === activeViewId) ?? portalViews[0];
+
+  function updateActiveView(field: keyof Omit<StudioPortalView, "milestones">, value: string) {
+    setPortalViews((current) =>
+      current.map((view) => (view.id === activeView.id ? { ...view, [field]: value } : view)),
+    );
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -63,12 +102,11 @@ export function PortalStudioForm({ initialPortal }: PortalStudioFormProps) {
         clientNames,
         email,
         accessCode,
-        address,
-        propertyImage,
-        propertyImageAlt,
-        closingDate,
-        summaryNote,
-        milestones: milestones.map(({ id: _id, ...milestone }) => milestone),
+        closingDate: portalViews[0]?.closingDate || "",
+        portalViews: portalViews.map((view) => ({
+          ...view,
+          milestones: view.milestones.map(stripMilestoneId),
+        })),
       }),
     });
 
@@ -90,22 +128,94 @@ export function PortalStudioForm({ initialPortal }: PortalStudioFormProps) {
   }
 
   function updateMilestone(id: string, field: keyof Omit<StudioMilestone, "id">, value: string | boolean) {
-    setMilestones((current) =>
-      current.map((milestone) =>
-        milestone.id === id ? { ...milestone, [field]: value } : milestone,
+    setPortalViews((current) =>
+      current.map((view) =>
+        view.id === activeView.id
+          ? {
+              ...view,
+              milestones: view.milestones.map((milestone) =>
+                milestone.id === id ? { ...milestone, [field]: value } : milestone,
+              ),
+            }
+          : view,
       ),
     );
   }
 
   function removeMilestone(id: string) {
-    setMilestones((current) => current.filter((milestone) => milestone.id !== id));
+    setPortalViews((current) =>
+      current.map((view) =>
+        view.id === activeView.id
+          ? { ...view, milestones: view.milestones.filter((milestone) => milestone.id !== id) }
+          : view,
+      ),
+    );
   }
 
   function addMilestone() {
-    setMilestones((current) => [
-      ...current,
-      { id: newMilestoneId(), title: "", deadline: "", notes: "", completed: false },
-    ]);
+    setPortalViews((current) =>
+      current.map((view) =>
+        view.id === activeView.id
+          ? {
+              ...view,
+              milestones: [
+                ...view.milestones,
+                { id: newMilestoneId(), title: "", deadline: "", notes: "", completed: false },
+              ],
+            }
+          : view,
+      ),
+    );
+  }
+
+  function addSellingView() {
+    if (portalViews.some((view) => view.id === portalTemplates.seller.id)) {
+      setActiveViewId(portalTemplates.seller.id);
+      return;
+    }
+
+    const source = activeView;
+    const sellingView: StudioPortalView = {
+      ...source,
+      ...portalTemplates.seller,
+      address: source.address,
+      propertyImage: "",
+      propertyImageAlt: "",
+      closingDate: source.closingDate,
+      milestones: portalTemplates.seller.milestones.map((milestone) => ({
+        id: newMilestoneId(),
+        ...milestone,
+      })),
+    };
+
+    setPortalViews((current) => [...current, sellingView]);
+    setActiveViewId(sellingView.id);
+  }
+
+  function duplicateCurrentView() {
+    const nextId = `view-${Date.now()}`;
+    const nextView: StudioPortalView = {
+      ...activeView,
+      id: nextId,
+      label: `${activeView.label} Copy`,
+      milestones: activeView.milestones.map((milestone) => ({
+        id: newMilestoneId(),
+        ...stripMilestoneId(milestone),
+      })),
+    };
+
+    setPortalViews((current) => [...current, nextView]);
+    setActiveViewId(nextId);
+  }
+
+  function removeActiveView() {
+    if (portalViews.length <= 1) {
+      return;
+    }
+
+    const nextViews = portalViews.filter((view) => view.id !== activeView.id);
+    setPortalViews(nextViews);
+    setActiveViewId(nextViews[0].id);
   }
 
   async function handleDelete() {
@@ -153,7 +263,7 @@ export function PortalStudioForm({ initialPortal }: PortalStudioFormProps) {
           {isEditing ? "Edit this client portal." : "Create a client portal from the buyer template."}
         </h2>
         <p className="mt-4 max-w-3xl text-base leading-8 text-muted">
-          Fill in the client details, adjust the milestones, then save the portal. You can remove or add contingencies as needed for each client.
+          Fill in the client details, add buying or selling pages, adjust the milestones, then save the portal.
         </p>
 
         <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -170,18 +280,87 @@ export function PortalStudioForm({ initialPortal }: PortalStudioFormProps) {
             <input value={accessCode} onChange={(event) => setAccessCode(event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
           </label>
           <label className="grid gap-2">
+            <span className="text-sm font-medium text-navy">Primary closing date</span>
+            <input type="date" value={portalViews[0]?.closingDate || ""} onChange={(event) => {
+              const primaryId = portalViews[0]?.id;
+              setPortalViews((current) =>
+                current.map((view) =>
+                  view.id === primaryId ? { ...view, closingDate: event.target.value } : view,
+                ),
+              );
+            }} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
+          </label>
+        </div>
+      </section>
+
+      <section className="rounded-[2rem] border border-line bg-white p-8 shadow-card">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.32em] text-muted">Portal Pages</p>
+            <h3 className="mt-3 font-display text-3xl text-navy">Edit each transaction page.</h3>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={addSellingView}
+              className="rounded-full border border-line px-5 py-2.5 text-sm text-navy transition hover:border-navy"
+            >
+              Add selling page
+            </button>
+            <button
+              type="button"
+              onClick={duplicateCurrentView}
+              className="rounded-full border border-line px-5 py-2.5 text-sm text-navy transition hover:border-navy"
+            >
+              Duplicate page
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          {portalViews.map((view) => (
+            <button
+              key={view.id}
+              type="button"
+              onClick={() => setActiveViewId(view.id)}
+              className={`rounded-full border px-5 py-2.5 text-sm font-medium transition ${
+                activeView.id === view.id
+                  ? "border-navy bg-navy text-white"
+                  : "border-line text-muted hover:border-navy hover:text-navy"
+              }`}
+              style={activeView.id === view.id ? { color: "#f8f5ef" } : undefined}
+            >
+              {view.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-8 grid gap-5 md:grid-cols-2">
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-navy">Toggle label</span>
+            <input value={activeView.label} onChange={(event) => updateActiveView("label", event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
+          </label>
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-navy">Transaction type</span>
+            <input value={activeView.transactionType} onChange={(event) => updateActiveView("transactionType", event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
+          </label>
+          <label className="grid gap-2">
             <span className="text-sm font-medium text-navy">Closing date</span>
-            <input type="date" value={closingDate} onChange={(event) => setClosingDate(event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
+            <input type="date" value={activeView.closingDate} onChange={(event) => updateActiveView("closingDate", event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
+          </label>
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-navy">Table heading</span>
+            <input value={activeView.viewLabel} onChange={(event) => updateActiveView("viewLabel", event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
           </label>
           <label className="grid gap-2 md:col-span-2">
             <span className="text-sm font-medium text-navy">Property address</span>
-            <input value={address} onChange={(event) => setAddress(event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
+            <input value={activeView.address} onChange={(event) => updateActiveView("address", event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
           </label>
           <label className="grid gap-2 md:col-span-2">
             <span className="text-sm font-medium text-navy">Cover photo JPG path</span>
             <input
-              value={propertyImage}
-              onChange={(event) => setPropertyImage(event.target.value)}
+              value={activeView.propertyImage}
+              onChange={(event) => updateActiveView("propertyImage", event.target.value)}
               placeholder="/client-portals/example-home.jpg"
               className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy"
             />
@@ -194,13 +373,23 @@ export function PortalStudioForm({ initialPortal }: PortalStudioFormProps) {
           </label>
           <label className="grid gap-2 md:col-span-2">
             <span className="text-sm font-medium text-navy">Cover photo alt text</span>
-            <input value={propertyImageAlt} onChange={(event) => setPropertyImageAlt(event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
+            <input value={activeView.propertyImageAlt} onChange={(event) => updateActiveView("propertyImageAlt", event.target.value)} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
           </label>
           <label className="grid gap-2 md:col-span-2">
             <span className="text-sm font-medium text-navy">Summary note</span>
-            <textarea value={summaryNote} onChange={(event) => setSummaryNote(event.target.value)} rows={3} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
+            <textarea value={activeView.summaryNote} onChange={(event) => updateActiveView("summaryNote", event.target.value)} rows={3} className="rounded-[1.2rem] border border-line bg-paper px-4 py-3 text-base text-navy outline-none transition focus:border-navy" />
           </label>
         </div>
+
+        {portalViews.length > 1 ? (
+          <button
+            type="button"
+            onClick={removeActiveView}
+            className="mt-6 rounded-full border border-red-200 px-5 py-2.5 text-sm text-red-700 transition hover:bg-red-50"
+          >
+            Remove this page
+          </button>
+        ) : null}
       </section>
 
       <section className="rounded-[2rem] border border-line bg-white p-8 shadow-card">
@@ -219,7 +408,7 @@ export function PortalStudioForm({ initialPortal }: PortalStudioFormProps) {
         </div>
 
         <div className="mt-8 space-y-4">
-          {milestones.map((milestone, index) => (
+          {activeView.milestones.map((milestone, index) => (
             <div key={milestone.id} className="rounded-[1.6rem] border border-line bg-paper p-5">
               <div className="grid gap-4 md:grid-cols-[1.1fr_0.8fr_auto]">
                 <label className="grid gap-2">

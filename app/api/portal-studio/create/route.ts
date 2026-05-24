@@ -13,6 +13,19 @@ type IncomingMilestone = {
   completed: boolean;
 };
 
+type IncomingPortalView = {
+  id: string;
+  label: string;
+  viewLabel: string;
+  address: string;
+  propertyImage: string;
+  propertyImageAlt: string;
+  transactionType: string;
+  closingDate: string;
+  summaryNote: string;
+  milestones: IncomingMilestone[];
+};
+
 function getSaveErrorMessage(error: unknown) {
   if (error instanceof Error && error.message.includes("EROFS")) {
     return "Portal Studio can only save portals while the site is running locally. The live website is read-only, so add the portal locally, commit it, and redeploy.";
@@ -38,6 +51,7 @@ export async function POST(request: Request) {
       closingDate?: string;
       summaryNote?: string;
       milestones?: IncomingMilestone[];
+      portalViews?: IncomingPortalView[];
     };
 
     if (!payload.clientNames || !payload.email || !payload.accessCode || !payload.closingDate) {
@@ -48,7 +62,8 @@ export async function POST(request: Request) {
     }
 
     const template = portalTemplates.buyer;
-    const milestones = (payload.milestones ?? [])
+    const cleanMilestones = (milestones: IncomingMilestone[] = []) =>
+      milestones
       .filter((item) => item.title.trim() && item.deadline.trim())
       .map((item) => ({
         title: item.title.trim(),
@@ -57,20 +72,43 @@ export async function POST(request: Request) {
         completed: Boolean(item.completed),
       }));
 
+    const portalViews = (payload.portalViews?.length
+      ? payload.portalViews
+      : [
+          {
+            id: template.id,
+            label: template.label,
+            viewLabel: template.viewLabel,
+            address: payload.address?.trim() || "Address to be added",
+            propertyImage: payload.propertyImage?.trim() || "",
+            propertyImageAlt: payload.propertyImageAlt?.trim() || "Client property cover photo",
+            transactionType: template.transactionType,
+            closingDate: payload.closingDate,
+            summaryNote: payload.summaryNote?.trim() || template.summaryNote,
+            milestones: payload.milestones ?? [],
+          },
+        ]).map((view, index) => ({
+      id: view.id?.trim() || `view-${index + 1}`,
+      label: view.label?.trim() || `View ${index + 1}`,
+      viewLabel: view.viewLabel?.trim() || template.viewLabel,
+      address: view.address?.trim() || "Address to be added",
+      propertyImage:
+        view.propertyImage?.trim() ||
+        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80",
+      propertyImageAlt: view.propertyImageAlt?.trim() || "Client property cover photo",
+      transactionType: view.transactionType?.trim() || template.transactionType,
+      closingDate: view.closingDate || payload.closingDate || "",
+      summaryNote: view.summaryNote?.trim() || template.summaryNote,
+      milestones: cleanMilestones(view.milestones),
+    }));
+    const primaryView = portalViews[0];
+
     const created = await createPortal({
       clientNames: payload.clientNames.trim(),
       email: payload.email.trim(),
       accessCode: payload.accessCode.trim(),
-      address: payload.address?.trim() || "Address to be added",
-      propertyImage:
-        payload.propertyImage?.trim() ||
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80",
-      propertyImageAlt: payload.propertyImageAlt?.trim() || "Client property cover photo",
-      transactionType: template.transactionType,
-      closingDate: payload.closingDate,
-      summaryNote: payload.summaryNote?.trim() || template.summaryNote,
-      viewLabel: template.viewLabel,
-      milestones,
+      ...primaryView,
+      portalViews,
     });
 
     revalidatePath("/client-portal");

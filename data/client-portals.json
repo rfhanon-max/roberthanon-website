@@ -210,6 +210,136 @@
         "notes": "Closing will be coordinated with the lender and title company. I will confirm time and location.",
         "completed": false
       }
+    ],
+    "portalViews": [
+      {
+        "id": "buying",
+        "label": "Buying",
+        "viewLabel": "Accepted Offer Timeline Buyer",
+        "address": "1622 Moonlit Dr, Richfield",
+        "propertyImage": "/client-portals/cover.jpg",
+        "propertyImageAlt": "Exterior view of the property at 1622 Moonlit Dr",
+        "transactionType": "Buyer",
+        "closingDate": "2026-06-10",
+        "summaryNote": "Everything here is designed to keep the next steps clear, organized, and easy to follow.",
+        "milestones": [
+          {
+            "title": "Accepted Offer Date",
+            "deadline": "2026-05-01",
+            "notes": "Congratulations. Our offer was accepted and the contract is now fully binding.",
+            "completed": true
+          },
+          {
+            "title": "Earnest Money",
+            "deadline": "2026-05-06",
+            "notes": "Earnest money needs to be submitted within 5 days of the accepted offer. I will provide you with a link to TrustFunds to submit the earnest money electronically.",
+            "completed": false
+          },
+          {
+            "title": "Proof of Funds / Application",
+            "deadline": "2026-05-08",
+            "notes": "Provide proof of loan application by the deadline.",
+            "completed": false
+          },
+          {
+            "title": "Well and Septic",
+            "deadline": "2026-05-26",
+            "notes": "Seller to provide the well inspection, water test reports, and Septic inspection for review.",
+            "completed": false
+          },
+          {
+            "title": "Financing",
+            "deadline": "2026-05-19",
+            "notes": "This is the financing contingency deadline. Please respond quickly to lender requests so we stay on track.",
+            "completed": false
+          },
+          {
+            "title": "Title",
+            "deadline": "2026-05-26",
+            "notes": "Title commitment should be delivered for review so we can confirm there are no issues to resolve.",
+            "completed": false
+          },
+          {
+            "title": "Pre-Closing Walkthrough",
+            "deadline": "2026-06-09",
+            "notes": "We will schedule the final walkthrough shortly before closing to confirm the property condition.",
+            "completed": false
+          },
+          {
+            "title": "Closing Date",
+            "deadline": "2026-06-10",
+            "notes": "Closing will be coordinated with the lender and title company. I will confirm time and location.",
+            "completed": false
+          }
+        ]
+      },
+      {
+        "id": "selling",
+        "label": "Selling",
+        "viewLabel": "Accepted Offer Timeline Seller",
+        "address": "Selling property address to be added",
+        "propertyImage": "/client-portals/main.jpg",
+        "propertyImageAlt": "Seller property cover photo",
+        "transactionType": "Seller",
+        "closingDate": "2026-06-10",
+        "summaryNote": "Everything here is designed to keep the listing, deadlines, and next steps clear as we move toward closing.",
+        "milestones": [
+          {
+            "title": "Listing Agreement",
+            "deadline": "2026-05-01",
+            "notes": "Listing paperwork is signed and the selling plan is ready to move forward.",
+            "completed": false
+          },
+          {
+            "title": "Photography / Media",
+            "deadline": "2026-05-08",
+            "notes": "Photography, measurements, and listing media are coordinated before launch.",
+            "completed": false
+          },
+          {
+            "title": "Listing Live",
+            "deadline": "2026-05-10",
+            "notes": "The property is active and showing activity can be tracked from here.",
+            "completed": false
+          },
+          {
+            "title": "Offer Review",
+            "deadline": "2026-05-15",
+            "notes": "We will review offer terms, timing, contingencies, and net proceeds together.",
+            "completed": false
+          },
+          {
+            "title": "Inspection Contingency",
+            "deadline": "2026-05-26",
+            "notes": "Inspection-related deadlines and any buyer requests can be tracked here.",
+            "completed": false
+          },
+          {
+            "title": "Appraisal",
+            "deadline": "2026-06-03",
+            "notes": "The buyer lender appraisal is monitored so we can respond quickly if anything needs attention.",
+            "completed": false
+          },
+          {
+            "title": "Title",
+            "deadline": "2026-06-03",
+            "notes": "Title work is reviewed and any items needing seller attention are resolved.",
+            "completed": false
+          },
+          {
+            "title": "Final Walkthrough",
+            "deadline": "2026-06-09",
+            "notes": "Buyer walkthrough is coordinated shortly before closing.",
+            "completed": false
+          },
+          {
+            "title": "Closing Date",
+            "deadline": "2026-06-10",
+            "notes": "Closing will be coordinated with the title company. I will confirm time, location, and what to bring.",
+            "completed": false
+          }
+        ]
+      }
     ]
   }
 ]

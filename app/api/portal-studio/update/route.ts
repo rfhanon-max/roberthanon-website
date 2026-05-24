@@ -6,7 +6,8 @@ import {
   isValidPortalStudioSession,
   PORTAL_STUDIO_COOKIE,
 } from "@/lib/portal-studio-access";
-import type { ClientMilestone } from "@/lib/client-portal-schema";
+import type { ClientMilestone, ClientPortalView } from "@/lib/client-portal-schema";
+import { portalTemplates } from "@/lib/client-portal-schema";
 
 type Payload = {
   slug?: string;
@@ -19,6 +20,7 @@ type Payload = {
   closingDate?: string;
   summaryNote?: string;
   milestones?: ClientMilestone[];
+  portalViews?: ClientPortalView[];
 };
 
 function getSaveErrorMessage(error: unknown) {
@@ -49,18 +51,52 @@ export async function POST(request: Request) {
       );
     }
 
+    const template = portalTemplates.buyer;
+    const cleanMilestones = (milestones: ClientMilestone[] = []) =>
+      milestones
+        .filter((item) => item.title.trim() && item.deadline.trim())
+        .map((item) => ({
+          title: item.title.trim(),
+          deadline: item.deadline,
+          notes: item.notes.trim(),
+          completed: Boolean(item.completed),
+        }));
+
+    const portalViews = (payload.portalViews?.length
+      ? payload.portalViews
+      : [
+          {
+            id: template.id,
+            label: template.label,
+            viewLabel: "Accepted Offer Timeline Buyer",
+            address: payload.address || "",
+            propertyImage: payload.propertyImage || "",
+            propertyImageAlt: payload.propertyImageAlt || "",
+            transactionType: "Buyer",
+            closingDate: payload.closingDate,
+            summaryNote: payload.summaryNote || "",
+            milestones: payload.milestones || [],
+          },
+        ]).map((view, index) => ({
+      id: view.id?.trim() || `view-${index + 1}`,
+      label: view.label?.trim() || `View ${index + 1}`,
+      viewLabel: view.viewLabel?.trim() || template.viewLabel,
+      address: view.address?.trim() || "",
+      propertyImage: view.propertyImage?.trim() || "",
+      propertyImageAlt: view.propertyImageAlt?.trim() || "",
+      transactionType: view.transactionType?.trim() || template.transactionType,
+      closingDate: view.closingDate || payload.closingDate || "",
+      summaryNote: view.summaryNote?.trim() || "",
+      milestones: cleanMilestones(view.milestones),
+    }));
+    const primaryView = portalViews[0];
+
     const updatedPortal = await updatePortal(payload.slug, {
       clientNames: payload.clientNames,
-      viewLabel: "Accepted Offer Timeline Buyer",
-      address: payload.address || "",
-      propertyImage: payload.propertyImage || "",
-      propertyImageAlt: payload.propertyImageAlt || "",
-      transactionType: "Buyer",
-      closingDate: payload.closingDate,
-      summaryNote: payload.summaryNote || "",
       email: payload.email,
       accessCode: payload.accessCode,
-      milestones: payload.milestones || [],
+      ...primaryView,
+      portalViews,
     });
 
     if (!updatedPortal) {
